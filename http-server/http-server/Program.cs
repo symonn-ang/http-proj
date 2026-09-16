@@ -58,36 +58,88 @@ using http_server;
 
 // HTTP code ====================================================================================================================
 
-IPHostEntry ipHost = await Dns.GetHostEntryAsync("x.com");
-IPAddress address = ipHost.AddressList[0];
-int port = 5000;
-var ipEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), port); // .Any listens to all local network interfaces (the machine's IPv4 ifs)
-                                                           // .Loopback makes server accessible from the same computer
-TcpListener listener = new(ipEndPoint);                    // loopback = IPAddress.Parse("127.0.0.1")
-     // ^ server-side TCP endpoint that waits for connections
+//IPHostEntry ipHost = await Dns.GetHostEntryAsync("x.com");
+//IPAddress address = ipHost.AddressList[0];
+//int port = 5000;
+//var ipEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), port); // .Any listens to all local network interfaces (the machine's IPv4 ifs)
+//                                                           // .Loopback makes server accessible from the same computer
+//TcpListener listener = new(ipEndPoint);                    // loopback = IPAddress.Parse("127.0.0.1")
+//     // ^ server-side TCP endpoint that waits for connections
+//try
+//{
+//    listener.Start();
+//    Task clientTask = testFile.CommenceTest();
+
+//    Console.WriteLine($"Listening on port {port}...");
+
+//    using var handler = await listener.AcceptTcpClientAsync(); // Accept method can infer to var // Flow 1
+//    Console.WriteLine("Client connected.");                    // listener accepts the client trying to connect in the same (add, port)
+//    await using NetworkStream stream = handler.GetStream(); // handler and client now in the same connection
+
+//    var message = $"DateTime: {DateTime.Now}";
+//    var dateTimeBytes = Encoding.UTF8.GetBytes(message);
+
+//    //stream.Write(dateTimeBytes);
+//    await stream.WriteAsync(dateTimeBytes);
+//    Console.WriteLine($"Sent message: {message}"); // after sending, client will read it
+
+//    await clientTask;
+//}
+//finally 
+//{
+//    listener.Stop();
+//}
+
+// HTTP code ====================================================================================================================
+
+IPEndPoint ipEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5000);
+TcpListener listener = new TcpListener(ipEndPoint);
+
 try
 {
     listener.Start();
-    Task clientTask = testFile.CommenceTest();
+    //Task clientReq = testFile.CommenceTest();
 
-    Console.WriteLine($"Listening on port {port}...");
+    using TcpClient handler = await listener.AcceptTcpClientAsync(); // wait for connection
+    using NetworkStream stream = handler.GetStream();
 
-    using var handler = await listener.AcceptTcpClientAsync(); // Accept method can infer to var // Flow 1
-    Console.WriteLine("Client connected.");                    // listener accepts the client trying to connect in the same (add, port)
-    await using NetworkStream stream = handler.GetStream(); // handler and client now in the same connection
+    byte[] buffer = new byte[4096];
+    int received = await stream.ReadAsync(buffer);
 
-    var message = $"DateTime: {DateTime.Now}";
-    var dateTimeBytes = Encoding.UTF8.GetBytes(message);
+    string request = Encoding.UTF8.GetString(buffer, 0, received); // read and decode done here, after that is option to parse
 
-    //stream.Write(dateTimeBytes);
-    await stream.WriteAsync(dateTimeBytes);
-    Console.WriteLine($"Sent message: {message}"); // after sending, client will read it
+    Console.WriteLine("Request: ");                                 // HTTP request parsing
+    Console.WriteLine(request);                                     // print out the connection's request
 
-    await clientTask;
+    string body = 
+        "HTTP/1.1 200 OK\r\n" +
+        "Content-Type: text/plain; charset=utf-8\n" +
+        $"Content-Length: {Encoding.UTF8.GetByteCount(request)}\r\n" +
+        $"DateTime: {DateTime.Now}";                      // send out a response after
+
+    string response =   // response construction, can add different status, headers and body here // rn its a string, but if client is http ==
+        "HTTP/1.1 200 OK\r\n" +                                     // HTTP status // --> metadata
+        "Content-Type: text/plain\r\n" +                            // HTTP header // --> metadata
+        $"Content-Length: {Encoding.UTF8.GetByteCount(body)}\r\n" + // HTTP header // --> metadata
+        "Connection: Close\r\n" +                                   // HTTP header // --> metadata // all of them can have a different res
+        "\r\n" +
+        body;                                                       // body        // --> content to display
+        // HTTP specifies that headers are separated by CRLF (\r\n), and that an empty CRLF separates the headers from the body.
+        // response doesn't execute anythin unless the application does/can do something about it, like say text/html it will interpret it as such
+        // ^ response/body
+
+    byte[] resBytes= Encoding.UTF8.GetBytes(response);
+    await stream.WriteAsync(resBytes);
+
+    Console.WriteLine($"Sent Message: {body}");
+
+    //await clientReq;
 }
-finally 
+finally
 {
     listener.Stop();
 }
 
-// HTTP code ====================================================================================================================
+
+
+
