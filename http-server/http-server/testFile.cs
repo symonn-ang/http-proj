@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
@@ -7,6 +8,9 @@ namespace http_server
 {
     internal class testFile
     {
+        private static string address = "127.0.0.1";
+        private static int port = 5000;
+
         //public static async Task CommenceTest()
         //{
         //    using TcpClient client = new TcpClient(); // TCP client establishes a TCP connection == ConnectAsync establishes the connection
@@ -26,18 +30,41 @@ namespace http_server
         //    Console.WriteLine($"Received: {message}");
         //}
 
-        public static async Task CommenceTest()
+        //public static async Task CommenceTest()
+        //{
+        //    using TcpClient client = new TcpClient();
+        //    await client.ConnectAsync("127.0.0.1", 5000);
+        //    using NetworkStream stream = client.GetStream();
+
+        //    byte[] buffer = new byte[1024];
+        //    int receieved = await stream.ReadAsync(buffer);
+
+        //    string message = Encoding.UTF8.GetString(buffer, 0, receieved);
+
+        //    Console.WriteLine($"Message Received: {message}");
+        //}
+
+        public static async Task ConnectTest()
         {
             using TcpClient client = new TcpClient();
-            await client.ConnectAsync("127.0.0.1", 5000);
+            await client.ConnectAsync(IPAddress.Parse(address), port);
             using NetworkStream stream = client.GetStream();
 
-            byte[] buffer = new byte[1024];
-            int receieved = await stream.ReadAsync(buffer);
+            string request =
+                "GET HTTP/1.1\r\n" +
+                $"Host: {address}\r\n" +
+                "Connection: close\r\n" +
+                "\r\n";
 
-            string message = Encoding.UTF8.GetString(buffer, 0, receieved);
+            byte[] reqByte = Encoding.UTF8.GetBytes(request);
+            await stream.WriteAsync(reqByte);
 
-            Console.WriteLine($"Message Received: {message}");
+            byte[] buffer = new byte[4096];
+            var received = await stream.ReadAsync(buffer);
+
+            string res = Encoding.UTF8.GetString(buffer, 0, received);
+            Console.WriteLine($"From testFile:\n{res}");
+
         }
 
     }

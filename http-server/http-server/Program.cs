@@ -56,7 +56,7 @@ using http_server;
 //var message = Encoding.UTF8.GetString(buffer, 0, received);
 //Console.WriteLine($"Message: {message}"); 
 
-// HTTP code ====================================================================================================================
+// TCP Server code ====================================================================================================================
 
 //IPHostEntry ipHost = await Dns.GetHostEntryAsync("x.com");
 //IPAddress address = ipHost.AddressList[0];
@@ -90,56 +90,117 @@ using http_server;
 //    listener.Stop();
 //}
 
-// HTTP code ====================================================================================================================
+// TCP Server code ====================================================================================================================
+// TCP Server that speaks HTTP protocl code ===========================================================================================
 
-IPEndPoint ipEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5000);
-TcpListener listener = new TcpListener(ipEndPoint);
+//IPEndPoint ipEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 5000);
+//TcpListener listener = new TcpListener(ipEndPoint);
 
-try
+//try
+//{
+//    listener.Start();
+//    //Task clientReq = testFile.CommenceTest();
+
+//    using TcpClient handler = await listener.AcceptTcpClientAsync(); // wait for connection
+//    using NetworkStream stream = handler.GetStream();
+
+//    byte[] buffer = new byte[4096];
+//    int received = await stream.ReadAsync(buffer);
+
+//    string request = Encoding.UTF8.GetString(buffer, 0, received); // read and decode done here, after that is option to parse
+
+//    Console.WriteLine("Request: ");                                 // HTTP request parsing
+//    Console.WriteLine(request);                                     // print out the connection's request
+
+//    string body = 
+//        "HTTP/1.1 200 OK\r\n" +
+//        "Content-Type: text/plain; charset=utf-8\n" +
+//        $"Content-Length: {Encoding.UTF8.GetByteCount(request)}\r\n" +
+//        $"DateTime: {DateTime.Now}";                      // send out a response after
+
+//    string response =   // response construction, can add different status, headers and body here // rn its a string, but if client is http ==
+//        "HTTP/1.1 200 OK\r\n" +                                     // HTTP status // --> metadata
+//        "Content-Type: text/plain\r\n" +                            // HTTP header // --> metadata
+//        $"Content-Length: {Encoding.UTF8.GetByteCount(body)}\r\n" + // HTTP header // --> metadata
+//        "Connection: Close\r\n" +                                   // HTTP header // --> metadata // all of them can have a different res
+//        "\r\n" +
+//        body;                                                       // body        // --> content to display
+//        // HTTP specifies that headers are separated by CRLF (\r\n), and that an empty CRLF separates the headers from the body.
+//        // response doesn't execute anythin unless the application does/can do something about it, like say text/html it will interpret it as such
+//        // ^ response/body
+
+//    byte[] resBytes= Encoding.UTF8.GetBytes(response);
+//    await stream.WriteAsync(resBytes);
+
+//    Console.WriteLine($"Sent Message: {body}");
+
+//    //await clientReq;
+//}
+//finally
+//{
+//    listener.Stop();
+//}
+
+// TCP Server that speaks HTTP protocl code ===========================================================================================
+// speaks the HTTP protocol (you manually create the HTTP response headers + body)
+// make it loop
+
+static async Task StartConnection()
 {
-    listener.Start();
-    //Task clientReq = testFile.CommenceTest();
+    string address = "127.0.0.1";
+    int port = 5000;
+    IPEndPoint ipEndPoint = new IPEndPoint(IPAddress.Parse(address), port);
+    TcpListener listener = new TcpListener(ipEndPoint);
 
-    using TcpClient handler = await listener.AcceptTcpClientAsync(); // wait for connection
-    using NetworkStream stream = handler.GetStream();
-
-    byte[] buffer = new byte[4096];
-    int received = await stream.ReadAsync(buffer);
-
-    string request = Encoding.UTF8.GetString(buffer, 0, received); // read and decode done here, after that is option to parse
-
-    Console.WriteLine("Request: ");                                 // HTTP request parsing
-    Console.WriteLine(request);                                     // print out the connection's request
-
-    string body = 
-        "HTTP/1.1 200 OK\r\n" +
-        "Content-Type: text/plain; charset=utf-8\n" +
-        $"Content-Length: {Encoding.UTF8.GetByteCount(request)}\r\n" +
-        $"DateTime: {DateTime.Now}";                      // send out a response after
-
-    string response =   // response construction, can add different status, headers and body here // rn its a string, but if client is http ==
-        "HTTP/1.1 200 OK\r\n" +                                     // HTTP status // --> metadata
-        "Content-Type: text/plain\r\n" +                            // HTTP header // --> metadata
-        $"Content-Length: {Encoding.UTF8.GetByteCount(body)}\r\n" + // HTTP header // --> metadata
-        "Connection: Close\r\n" +                                   // HTTP header // --> metadata // all of them can have a different res
-        "\r\n" +
-        body;                                                       // body        // --> content to display
-        // HTTP specifies that headers are separated by CRLF (\r\n), and that an empty CRLF separates the headers from the body.
-        // response doesn't execute anythin unless the application does/can do something about it, like say text/html it will interpret it as such
-        // ^ response/body
-
-    byte[] resBytes= Encoding.UTF8.GetBytes(response);
-    await stream.WriteAsync(resBytes);
-
-    Console.WriteLine($"Sent Message: {body}");
-
-    //await clientReq;
+    try
+    {
+        listener.Start();
+        Console.WriteLine($"Listening on http://{address}:{port}");
+        while (true)
+        {
+            TcpClient handler = await listener.AcceptTcpClientAsync(); // tried to do using here, but let the discard op dispose it
+            _ = HandleConnection(handler);
+        }
+    }
+    finally
+    {
+        listener.Stop();
+    }
 }
-finally
+
+static async Task HandleConnection(TcpClient client)
 {
-    listener.Stop();
+    using (client)                                    // It’s the safe and recommended way to make sure you don’t leak connections/sockets,
+    using (NetworkStream stream = client.GetStream()) // even if something goes wrong inside the block. (Resource Cleanup (hover))
+    {
+        byte[] buffer = new byte[4096];
+        int received = await stream.ReadAsync(buffer);
+
+        string request = Encoding.UTF8.GetString(buffer, 0, received);
+        Console.WriteLine("Request:");
+        Console.Write(request);
+
+        string body = $"DateTime: {DateTime.Now}";
+
+        string response =
+            "HTTP/1.1 200 OK\r\n" +
+            "Content-Type: text/plain\r\n" +
+            $"Content-Length: {Encoding.UTF8.GetByteCount(body)}\r\n" +
+            "\r\n" +
+            body;
+
+        byte[] resByte = Encoding.UTF8.GetBytes(response);
+        await stream.WriteAsync(resByte);
+
+        Console.WriteLine($"Sent Message: {body}\n");
+    }
+
 }
 
+var serverTask = StartConnection();
 
+await Task.Delay(300);
 
+await testFile.ConnectTest();
 
+await serverTask;
