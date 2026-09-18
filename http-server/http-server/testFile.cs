@@ -44,27 +44,51 @@ namespace http_server
         //    Console.WriteLine($"Message Received: {message}");
         //}
 
-        public static async Task ConnectTest()
+        //public static async Task ConnectTest()
+        //{
+        //    using TcpClient client = new TcpClient();
+        //    await client.ConnectAsync(IPAddress.Parse(address), port);
+        //    using NetworkStream stream = client.GetStream();
+
+        //    string request =
+        //        "GET HTTP/1.1\r\n" +
+        //        $"Host: {address}\r\n" +
+        //        "Connection: close\r\n" +
+        //        "\r\n";
+
+        //    byte[] reqByte = Encoding.UTF8.GetBytes(request);
+        //    await stream.WriteAsync(reqByte);
+
+        //    byte[] buffer = new byte[4096];
+        //    var received = await stream.ReadAsync(buffer);
+
+        //    string res = Encoding.UTF8.GetString(buffer, 0, received);
+        //    Console.WriteLine($"From testFile:\n{res}");
+
+        //}
+
+
+        public static async Task testClient()
         {
             using TcpClient client = new TcpClient();
             await client.ConnectAsync(IPAddress.Parse(address), port);
             using NetworkStream stream = client.GetStream();
 
-            string request =
+            string request =                                    // Custom request
                 "GET HTTP/1.1\r\n" +
                 $"Host: {address}\r\n" +
-                "Connection: close\r\n" +
+                $"Connection: close\r\n" +
                 "\r\n";
 
             byte[] reqByte = Encoding.UTF8.GetBytes(request);
             await stream.WriteAsync(reqByte);
 
             byte[] buffer = new byte[4096];
-            var received = await stream.ReadAsync(buffer);
+            int received = await stream.ReadAsync(buffer);
 
-            string res = Encoding.UTF8.GetString(buffer, 0, received);
-            Console.WriteLine($"From testFile:\n{res}");
-
+            string response = Encoding.UTF8.GetString(buffer, 0, received);
+            Console.WriteLine();
+            Console.WriteLine($"Response:\n{response}");
         }
 
     }
