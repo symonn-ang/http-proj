@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Text;
 
 namespace http_server
@@ -70,17 +71,22 @@ namespace http_server
 
         public static async Task testClient()
         {
-            using TcpClient client = new TcpClient();
+            var client = new TcpClient();
             await client.ConnectAsync(IPAddress.Parse(address), port);
             using NetworkStream stream = client.GetStream();
 
-            string request =                                    // Custom request
-                "GET HTTP/1.1\r\n" +
-                $"Host: {address}\r\n" +
-                $"Connection: close\r\n" +
-                "\r\n";
+            string body = "Hello from testClient";
 
-            byte[] reqByte = Encoding.UTF8.GetBytes(request);
+            string request =
+                "POST /echo HTTP/1.1\r\n" +
+                $"Host: {address}:{port}\r\n" +
+                "Content-Type: text/plain\r\n" +
+                $"Content-Length: {Encoding.UTF8.GetByteCount(body)}\r\n" +
+                "Connection: close\r\n" +
+                "\r\n" +
+                body;
+
+            var reqByte = Encoding.UTF8.GetBytes(request);
             await stream.WriteAsync(reqByte);
 
             byte[] buffer = new byte[4096];
@@ -88,7 +94,7 @@ namespace http_server
 
             string response = Encoding.UTF8.GetString(buffer, 0, received);
             Console.WriteLine();
-            Console.WriteLine($"Response:\n{response}");
+            Console.WriteLine($"Received:\n{response}");
         }
 
     }

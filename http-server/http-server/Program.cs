@@ -12,6 +12,17 @@ using System.Runtime.InteropServices.Marshalling;
 //Console.WriteLine($"Path&Query: {canonicalUri.PathAndQuery}");
 //Console.WriteLine($"Fragment: {canonicalUri.Fragment}");
 
+var connection = new Connection();
+
+//await connection.StartConnection();
+
+var connectHttp = connection.StartConnection();
+
+await Task.Delay(1000);
+
+await testFile.testClient();
+
+await connectHttp;
 
 //string text = "Hello World\nHello Life";
 
@@ -209,110 +220,110 @@ using System.Runtime.InteropServices.Marshalling;
 // TCP Server that speaks HTTP protocl code ===========================================================================================
 
 
-static async Task StartConnection()
-{
-    string address = "127.0.0.1";
-    int port = 5000;
-    IPEndPoint ipEndPoint = new IPEndPoint(IPAddress.Parse(address), port);
-    TcpListener listener = new TcpListener(ipEndPoint);
+//static async Task StartConnection()
+//{
+//    string address = "127.0.0.1";
+//    int port = 5000;
+//    IPEndPoint ipEndPoint = new IPEndPoint(IPAddress.Parse(address), port);
+//    TcpListener listener = new TcpListener(ipEndPoint);
 
-    try
-    {
-        listener.Start();
-        Console.WriteLine($"Listening in... {address}:{port}");
-        while (true)
-        {
-            TcpClient handler = await listener.AcceptTcpClientAsync();
-            _ = HandleConnection(handler);
-        }
-    }
-    catch (Exception e)
-    {
-        Console.WriteLine($"Error: {e}");
-    }
-    finally
-    {
-        listener.Stop();
-    }
+//    try
+//    {
+//        listener.Start();
+//        Console.WriteLine($"Listening in... {address}:{port}");
+//        while (true)
+//        {
+//            TcpClient handler = await listener.AcceptTcpClientAsync();
+//            _ = HandleConnection(handler);
+//        }
+//    }
+//    catch (Exception e)
+//    {
+//        Console.WriteLine($"Error: {e}");
+//    }
+//    finally
+//    {
+//        listener.Stop();
+//    }
     
     
 
-}
+//}
 
-static async Task HandleConnection(TcpClient client)
-{
-    using (client) 
-    using (NetworkStream stream = client.GetStream()) {
-        byte[] buffer = new byte[4096];
-        int received = await stream.ReadAsync(buffer);
+//static async Task HandleConnection(TcpClient client)
+//{
+//    using (client) 
+//    using (NetworkStream stream = client.GetStream()) {
+//        byte[] buffer = new byte[4096];
+//        int received = await stream.ReadAsync(buffer);
 
-        string request = Encoding.UTF8.GetString(buffer, 0, received);      // Received request
-        //Console.WriteLine("Request: ");
-        //Console.Write(request);
+//        string request = Encoding.UTF8.GetString(buffer, 0, received);      // Received request
+//        //Console.WriteLine("Request: ");
+//        //Console.Write(request);
 
-        HttpRequest parser = ParseHttpRequest(request);
-        Console.WriteLine($"Method: {parser.Method}");
-        Console.WriteLine($"Path: {parser.Path}");
-        Console.WriteLine($"Version: {parser.Version}");
-        Console.WriteLine("Headers:");
-        foreach (var header in parser.Headers)
-        {
-            Console.WriteLine($"  {header.Key}: {header.Value}");
-        }
-        Console.WriteLine();
-        if (parser.Path == "/")
-        {
-            string body = $"Welcome to Root Path!";
+//        HttpRequest parser = ParseHttpRequest(request);
+//        Console.WriteLine($"Method: {parser.Method}");
+//        Console.WriteLine($"Path: {parser.Path}");
+//        Console.WriteLine($"Version: {parser.Version}");
+//        Console.WriteLine("Headers:");
+//        foreach (var header in parser.Headers)
+//        {
+//            Console.WriteLine($"  {header.Key}: {header.Value}");
+//        }
+//        Console.WriteLine();
+//        if (parser.Path == "/")
+//        {
+//            string body = $"Welcome to Root Path!";
 
-            string response =                                                   // TODO string's repeating, make a func
-                "HTTP/1.1 200 OK\r\n" +
-                "Content-Type: text/plain\r\n" +
-                $"Content-Length: {Encoding.UTF8.GetByteCount(body)}\r\n" +
-                $"\r\n" +
-                body;
+//            string response =                                                   // TODO string's repeating, make a func
+//                "HTTP/1.1 200 OK\r\n" +
+//                "Content-Type: text/plain\r\n" +
+//                $"Content-Length: {Encoding.UTF8.GetByteCount(body)}\r\n" +
+//                $"\r\n" +
+//                body;
 
-            byte[] resByte = Encoding.UTF8.GetBytes(response);
+//            byte[] resByte = Encoding.UTF8.GetBytes(response);
 
-            await stream.WriteAsync(resByte);
+//            await stream.WriteAsync(resByte);
 
-            Console.WriteLine($"Sent Message: {body}");
-        }
-        else if (parser.Path == "/favicon.ico")                              // methods are for writing, if on receiving side, do status codes 
-        {
-            string body = "Welcome to Favicon.ico!";
+//            Console.WriteLine($"Sent Message: {body}");
+//        }
+//        else if (parser.Path == "/favicon.ico")                              // methods are for writing, if on receiving side, do status codes 
+//        {
+//            string body = "Welcome to Favicon.ico!";
 
-            string response =
-                "HTTP/1.1 200 OK\r\n" +
-                "Content-Type: text/plain\r\n" +
-                $"Content-Length: {Encoding.UTF8.GetByteCount(body)}\r\n" +
-                "\r\n" +
-                body;
+//            string response =
+//                "HTTP/1.1 200 OK\r\n" +
+//                "Content-Type: text/plain\r\n" +
+//                $"Content-Length: {Encoding.UTF8.GetByteCount(body)}\r\n" +
+//                "\r\n" +
+//                body;
 
-            byte[] resByte = Encoding.UTF8.GetBytes(response);
+//            byte[] resByte = Encoding.UTF8.GetBytes(response);
 
-            await stream.WriteAsync(resByte);
+//            await stream.WriteAsync(resByte);
 
-            Console.WriteLine($"Sent Message: {body}");
-        }
-        else
-        {
-            string body = "404 not found";
+//            Console.WriteLine($"Sent Message: {body}");
+//        }
+//        else
+//        {
+//            string body = "404 not found";
 
-            string response =
-                "HTTP/1.1 404 Not Found\r\n" +
-                "Content-Type: text/plain\r\n" +
-                $"Content-Length: {Encoding.UTF8.GetByteCount(body)}\r\n" +
-                "\r\n" +
-                body;
+//            string response =
+//                "HTTP/1.1 404 Not Found\r\n" +
+//                "Content-Type: text/plain\r\n" +
+//                $"Content-Length: {Encoding.UTF8.GetByteCount(body)}\r\n" +
+//                "\r\n" +
+//                body;
 
-            byte[] resByte = Encoding.UTF8.GetBytes(response);
-            await stream.WriteAsync(resByte);
+//            byte[] resByte = Encoding.UTF8.GetBytes(response);
+//            await stream.WriteAsync(resByte);
 
-            Console.WriteLine($"Sent Message: {body}");
-        }
-        Console.WriteLine();
-    }
-}
+//            Console.WriteLine($"Sent Message: {body}");
+//        }
+//        Console.WriteLine();
+//    }
+//}
 
 //static HttpRequest ParseHttpRequest(string rawReq) // version 1
 //{
@@ -339,51 +350,51 @@ static async Task HandleConnection(TcpClient client)
 //    return parses;
 //}
 
-static HttpRequest ParseHttpRequest(string rawReq)
-{
-    var parse = new HttpRequest();
+//static HttpRequest ParseHttpRequest(string rawReq)
+//{
+//    var parse = new HttpRequest();
 
-    var lines = rawReq.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+//    var lines = rawReq.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
-    for (int i = 0; i < lines.Length; i++)
-    {
-        lines[i] = lines[i].TrimEnd('\r');
-    }
+//    for (int i = 0; i < lines.Length; i++)
+//    {
+//        lines[i] = lines[i].TrimEnd('\r');
+//    }
 
-    if (lines.Length == 0)
-    {
-        return parse;
-    }
+//    if (lines.Length == 0)
+//    {
+//        return parse;
+//    }
 
-    var reqLine = lines[0].Split(' ', StringSplitOptions.RemoveEmptyEntries);
-    if (reqLine.Length >= 3)
-    { 
-        parse.Method = reqLine[0];
-        parse.Path = reqLine[1];
-        parse.Version = reqLine[2];
-    }
+//    var reqLine = lines[0].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+//    if (reqLine.Length >= 3)
+//    { 
+//        parse.Method = reqLine[0];
+//        parse.Path = reqLine[1];
+//        parse.Version = reqLine[2];
+//    }
 
-    for (int i = 1; i < lines.Length; i++)
-    {
-        if (string.IsNullOrWhiteSpace(lines[i]))
-        {
-            break;
-        }
+//    for (int i = 1; i < lines.Length; i++)
+//    {
+//        if (string.IsNullOrWhiteSpace(lines[i]))
+//        {
+//            break;
+//        }
 
-        int colonIndex = lines[i].IndexOf(':');
+//        int colonIndex = lines[i].IndexOf(':');
         
-        if (colonIndex > 0)
-        {
-            string header = lines[i].Substring(0, colonIndex).Trim();
-            string headerMsg = lines[i].Substring(colonIndex + 1).Trim();
-            parse.Headers[header] = headerMsg;
-        }
-    }
+//        if (colonIndex > 0)
+//        {
+//            string header = lines[i].Substring(0, colonIndex).Trim();
+//            string headerMsg = lines[i].Substring(colonIndex + 1).Trim();
+//            parse.Headers[header] = headerMsg;
+//        }
+//    }
 
-    return parse;
-}
+//    return parse;
+//}
 
-await StartConnection();
+//await StartConnection();
 // TCP Server that speaks HTTP protocl code ===========================================================================================
 
 
