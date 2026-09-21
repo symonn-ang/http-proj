@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 
 namespace http_server
 {
@@ -11,6 +12,40 @@ namespace http_server
     {
         private static string address = "127.0.0.1";
         private static int port = 5000;
+
+        public static async Task PostMessage(string message, int id)
+        {
+            var client = new TcpClient();
+            await client.ConnectAsync(IPAddress.Parse(address), port);
+            using NetworkStream stream = client.GetStream();
+
+            var data = new
+            {
+                id = id,
+                message = message
+            };
+
+            string body = JsonSerializer.Serialize(data);
+
+            string request =
+                "POST /message HTTP/1.1\r\n" +
+                $"Host: {address}:{port}\r\n" +
+                "Content-Type: text/plain\r\n" +
+                $"Content-Length: {Encoding.UTF8.GetByteCount(body)}\r\n" +
+                "Connection: close\r\n" +
+                "\r\n" +
+                body;
+
+            var reqByte = Encoding.UTF8.GetBytes(request);
+            await stream.WriteAsync(reqByte);
+
+            byte[] buffer = new byte[4096];
+            int received = await stream.ReadAsync(buffer);
+
+            string response = Encoding.UTF8.GetString(buffer, 0, received);
+            Console.WriteLine();
+            Console.WriteLine($"Received:\n{response}");
+        }
 
         //public static async Task CommenceTest()
         //{
@@ -69,33 +104,50 @@ namespace http_server
         //}
 
 
-        public static async Task testClient()
-        {
-            var client = new TcpClient();
-            await client.ConnectAsync(IPAddress.Parse(address), port);
-            using NetworkStream stream = client.GetStream();
+        //public static async Task testClient(string message, int id)
+        //{
+        //    var client = new TcpClient();
+        //    await client.ConnectAsync(IPAddress.Parse(address), port);
+        //    using NetworkStream stream = client.GetStream();
 
-            string body = "Hello from testClient";
+        //    //string body = "Hello from testClient";
 
-            string request =
-                "POST /echo HTTP/1.1\r\n" +
-                $"Host: {address}:{port}\r\n" +
-                "Content-Type: text/plain\r\n" +
-                $"Content-Length: {Encoding.UTF8.GetByteCount(body)}\r\n" +
-                "Connection: close\r\n" +
-                "\r\n" +
-                body;
+        //    //string request =
+        //    //    "POST /echo HTTP/1.1\r\n" +
+        //    //    $"Host: {address}:{port}\r\n" +
+        //    //    "Content-Type: text/plain\r\n" +
+        //    //    $"Content-Length: {Encoding.UTF8.GetByteCount(body)}\r\n" +
+        //    //    "Connection: close\r\n" +
+        //    //    "\r\n" +
+        //    //    body;
 
-            var reqByte = Encoding.UTF8.GetBytes(request);
-            await stream.WriteAsync(reqByte);
+        //    var data = new
+        //    {
+        //        id = id,
+        //        message = message
+        //    };
 
-            byte[] buffer = new byte[4096];
-            int received = await stream.ReadAsync(buffer);
+        //    string body = JsonSerializer.Serialize(data);
 
-            string response = Encoding.UTF8.GetString(buffer, 0, received);
-            Console.WriteLine();
-            Console.WriteLine($"Received:\n{response}");
-        }
+        //    string request =
+        //        "POST /message HTTP/1.1\r\n" +
+        //        $"Host: {address}:{port}\r\n" +
+        //        "Content-Type: text/plain\r\n" +
+        //        $"Content-Length: {Encoding.UTF8.GetByteCount(body)}\r\n" +
+        //        "Connection: close\r\n" +
+        //        "\r\n" +
+        //        body;
+
+        //    var reqByte = Encoding.UTF8.GetBytes(request);
+        //    await stream.WriteAsync(reqByte);
+
+        //    byte[] buffer = new byte[4096];
+        //    int received = await stream.ReadAsync(buffer);
+
+        //    string response = Encoding.UTF8.GetString(buffer, 0, received);
+        //    Console.WriteLine();
+        //    Console.WriteLine($"Received:\n{response}");
+        //}
 
     }
 }

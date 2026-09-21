@@ -12,17 +12,61 @@ using System.Runtime.InteropServices.Marshalling;
 //Console.WriteLine($"Path&Query: {canonicalUri.PathAndQuery}");
 //Console.WriteLine($"Fragment: {canonicalUri.Fragment}");
 
-var connection = new Connection();
+var connection = new TCPConnection();
+
+Task check = connection.StartConnection();
+
+await Task.Delay(1000);
+int option = 0;
+int id = 1;
+do
+{
+    Console.WriteLine(
+        "1. Create Message\n" +
+        "2. Show all messages\n" +
+        "3. Exit"
+        );
+    Console.Write("Choose Option: ");
+    if (!int.TryParse(Console.ReadLine(), out option))
+    {
+        break;
+    }
+
+    switch (option)
+    {
+        case 1:
+            Console.Write("Enter Message: ");
+            string message = Console.ReadLine() ?? "";
+            await testFile.PostMessage(message, id);
+            id++;
+            break;
+        case 2:
+            Console.Write("Enter Message: ");
+            string message = Console.ReadLine() ?? "";
+            await testFile.PostMessage(message, id);
+            id++;
+            break;
+        case 3:
+            Console.WriteLine("GoodBye!");
+            break;
+        default:
+            Console.WriteLine("Please enter a valid option.");
+            break;
+    }
+
+} while (option != 2);
+
+await check;
 
 //await connection.StartConnection();
 
-var connectHttp = connection.StartConnection();
+//var connectHttp = connection.StartConnection();
 
-await Task.Delay(1000);
+//await Task.Delay(1000);
 
-await testFile.testClient();
+//await testFile.testClient();
 
-await connectHttp;
+//await connectHttp;
 
 //string text = "Hello World\nHello Life";
 

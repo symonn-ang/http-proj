@@ -16,6 +16,7 @@ namespace http_server
         public async Task StartConnection()
         {
             IPEndPoint ipEndPoint = new IPEndPoint(IPAddress.Parse(address), port);
+            Console.WriteLine(IPAddress.Parse(address));
             var listener = new TcpListener(ipEndPoint);
 
             try
