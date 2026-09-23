@@ -12,8 +12,9 @@ namespace http_server
     {
         private static string address = "127.0.0.1";
         private static int port = 5000;
+        static int id = 0;
 
-        public static async Task PostMessage(string message, int id)
+        public static async Task PostMessage(string message)
         {
             var client = new TcpClient();
             await client.ConnectAsync(IPAddress.Parse(address), port);
@@ -21,7 +22,7 @@ namespace http_server
 
             var data = new
             {
-                id = id,
+                id = id++,
                 message = message
             };
 
@@ -45,6 +46,51 @@ namespace http_server
             string response = Encoding.UTF8.GetString(buffer, 0, received);
             Console.WriteLine();
             Console.WriteLine($"Received:\n{response}");
+        }
+
+        public static async Task GetMessages()
+        {
+            TcpClient client = new TcpClient();
+            await client.ConnectAsync(IPAddress.Parse(address), port);
+            using NetworkStream stream = client.GetStream();
+            string request =
+                "GET /messages HTTP/1.1\r\n" +
+                $"Host: {address}:{port}\r\n" +
+                $"Connection: close\r\n" +
+                "\r\n";
+
+            byte[] resByte = Encoding.UTF8.GetBytes(request);
+            await stream.WriteAsync(resByte);
+
+            byte[] buffer = new byte[4096];
+            int received = await stream.ReadAsync(buffer);
+
+            string response = Encoding.UTF8.GetString(buffer, 0, received);
+
+            Console.WriteLine($"Received:\n{response}");
+
+        }
+
+        public static async Task DeleteMessage(int id)
+        {
+            TcpClient client = new TcpClient();
+            await client.ConnectAsync(IPAddress.Parse(address), port);
+            using NetworkStream stream = client.GetStream();
+
+            string request =
+                $"DELETE /message/{id} HTTP/1.1\r\n" +
+                $"Host: {address}:{port}\r\n" +
+                $"Connection: close\r\n" +
+                "\r\n";
+            await stream.WriteAsync(Encoding.UTF8.GetBytes(request));
+
+            byte[] buffer = new byte[4096];
+            int received = await stream.ReadAsync(buffer);
+
+            string response = Encoding.UTF8.GetString(buffer, 0, received);
+
+            Console.WriteLine($"\nReceived:\n{response}");
+
         }
 
         //public static async Task CommenceTest()

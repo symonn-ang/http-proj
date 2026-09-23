@@ -18,13 +18,14 @@ Task check = connection.StartConnection();
 
 await Task.Delay(1000);
 int option = 0;
-int id = 1;
 do
 {
     Console.WriteLine(
         "1. Create Message\n" +
         "2. Show all messages\n" +
-        "3. Exit"
+        "3. Delete a message\n" +
+        "4. Edit a message\n" +
+        "5. Exit"
         );
     Console.Write("Choose Option: ");
     if (!int.TryParse(Console.ReadLine(), out option))
@@ -34,19 +35,28 @@ do
 
     switch (option)
     {
-        case 1:
+        case 1:     // Create Message
             Console.Write("Enter Message: ");
             string message = Console.ReadLine() ?? "";
-            await testFile.PostMessage(message, id);
-            id++;
+            await testFile.PostMessage(message);
             break;
-        case 2:
-            Console.Write("Enter Message: ");
-            string message = Console.ReadLine() ?? "";
-            await testFile.PostMessage(message, id);
-            id++;
+        case 2:     // Get All Messages
+            await testFile.GetMessages();
             break;
-        case 3:
+        case 3:     // Delete a Message
+            Console.Write("Enter an ID: ");
+            if(!int.TryParse(Console.ReadLine(), out int id))
+            {
+                Console.WriteLine("Please enter a valid number.");
+            }
+
+            await testFile.DeleteMessage(id);
+
+            break;
+        case 4:     // Edit a Message
+            
+            break;
+        case 5:     // Exit
             Console.WriteLine("GoodBye!");
             break;
         default:
@@ -54,7 +64,7 @@ do
             break;
     }
 
-} while (option != 2);
+} while (option != 5);
 
 await check;
 

@@ -14,7 +14,6 @@ namespace http_server
         string address = "127.0.0.1";
         int port = 5000;
         static List<string> messages = new();
-
         public async Task StartConnection()
         {
             var listener = new TcpListener(IPAddress.Parse(address), port);
@@ -49,11 +48,11 @@ namespace http_server
                 {
                     ["GET /"] = HandleHome,
                     ["GET /time"] = HandleTime,
-                    //["GET /messages"] = HandleGetMessages,
+                    ["GET /messages"] = HandleGetMessages,
                     ["POST /echo"] = HandleEcho,
                     ["POST /message"] = HandlePostMessage,
-                    //["DELETE /message"] = HandlePostMessage,
-                    //["PUT /message"] = HandlePostMessage,
+                    //[$"DELETE /message/{id}"] = HandleDeleteMessage,
+                    //["PUT /message/{id}"] = HandleEditMessage,
                 };
 
                 byte[] buffer = new byte[4096];
@@ -74,11 +73,19 @@ namespace http_server
                     string response = MakeResponse(body, 200, contentType);
                     var resByte = Encoding.UTF8.GetBytes(response);
                     await stream.WriteAsync(resByte);
+                }
+                else if (httpParse.Method == "DELETE" && httpParse.Path.StartsWith("/message/"))
+                {
+                    string idPart = httpParse.Path.Substring("/message/".Length);
 
-                    foreach (var item in messages)
+                    if (int.TryParse(idPart, out int id) && id >= 0 && id < messages.Count)
                     {
-                        Console.WriteLine(item);
+                        messages.RemoveAt(id);
+                        string body = JsonSerializer.Serialize(new { message = "Message Deleted." });
+                        string response = MakeResponse(body, 200, "application/json");
+                        await stream.WriteAsync(Encoding.UTF8.GetBytes(response));
                     }
+
                 }
                 else
                 {
@@ -88,46 +95,8 @@ namespace http_server
                     await stream.WriteAsync(resByte);
                 }
 
-                string HandleHome(HttpRequest req)
-                {
-                    return "Welcome to LocalHost";
+                
 
-                }
-                string HandleTime(HttpRequest req)
-                {
-                    var data = new
-                    {
-                        UTCTime = DateTime.Now.ToString("ddd dd yyyy HH:mm:ss") + " GMT",
-                        DateTime = DateTime.Now,
-                    };
-                    string body = JsonSerializer.Serialize(data);
-                    return body;
-                }
-                string HandleEcho(HttpRequest req)
-                {
-                    var data = new
-                    {
-                        echo = "Hello World"
-                    };
-                    string body = JsonSerializer.Serialize(data);
-                    return body;
-                }
-                string HandlePostMessage(HttpRequest req)
-                {
-                    if (req.Body != null)
-                    {
-                        messages.Add(req.Body);
-                    }
-                    return "Message Created!";
-                }
-                string HandleGetMessages(HttpRequest req)
-                {
-                    if (req.Body != null)
-                    {
-                        messages.Add(req.Body);
-                    }
-                    return "Message Created!";
-                }
 
             }
         }
@@ -204,6 +173,48 @@ namespace http_server
             string body = req.Body == "" ? "empty" : req.Body!;
             Console.WriteLine($"Body: {body}");
             Console.WriteLine();
+        }
+
+        string HandleHome(HttpRequest req)
+        {
+            return "Welcome to LocalHost";
+
+        }
+        string HandleTime(HttpRequest req)
+        {
+            var data = new
+            {
+                UTCTime = DateTime.Now.ToString("ddd dd yyyy HH:mm:ss") + " GMT",
+                DateTime = DateTime.Now,
+            };
+            string body = JsonSerializer.Serialize(data);
+            return body;
+        }
+        string HandleEcho(HttpRequest req)
+        {
+            var data = new
+            {
+                echo = "Hello World"
+            };
+            string body = JsonSerializer.Serialize(data);
+            return body;
+        }
+        string HandlePostMessage(HttpRequest req)
+        {
+            if (req.Body != null)
+            {
+                messages.Add(req.Body);
+            }
+            return "Message Created!";
+        }
+        string HandleGetMessages(HttpRequest req)
+        {
+            var stringConcat = new StringBuilder();
+            foreach (string message in messages)
+            {
+                stringConcat.Append($"{message}");
+            }
+            return stringConcat.ToString();
         }
 
     }
