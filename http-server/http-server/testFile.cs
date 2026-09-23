@@ -12,7 +12,7 @@ namespace http_server
     {
         private static string address = "127.0.0.1";
         private static int port = 5000;
-        static int id = 0;
+        private static int id = 0;
 
         public static async Task PostMessage(string message)
         {
@@ -85,6 +85,37 @@ namespace http_server
             await stream.WriteAsync(Encoding.UTF8.GetBytes(request));
 
             byte[] buffer = new byte[4096];
+            int received = await stream.ReadAsync(buffer);
+
+            string response = Encoding.UTF8.GetString(buffer, 0, received);
+
+            Console.WriteLine($"\nReceived:\n{response}");
+
+        }
+
+        public static async Task EditMessage(int id, string message)
+        {
+            var client = new TcpClient();
+            await client.ConnectAsync(IPAddress.Parse(address), port);
+            using NetworkStream stream = client.GetStream();
+
+            var data = new
+            {
+                id = id,
+                message = message
+            };
+
+            string body = JsonSerializer.Serialize(data);
+
+            string request =
+                $"PUT /message/{id} HTTP/1.1\r\n" +
+                $"Host: {address}:{port}\r\n" +
+                "Connection: close\r\n" +
+                "\r\n" +
+                body;
+            await stream.WriteAsync(Encoding.UTF8.GetBytes(request));
+
+            var buffer = new byte[4096];
             int received = await stream.ReadAsync(buffer);
 
             string response = Encoding.UTF8.GetString(buffer, 0, received);

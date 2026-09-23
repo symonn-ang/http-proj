@@ -87,6 +87,23 @@ namespace http_server
                     }
 
                 }
+                else if (httpParse.Method == "PUT" && httpParse.Path.StartsWith("/message/"))
+                {
+                    string idPart = httpParse.Path.Substring("/message/".Length);
+
+                    if (int.TryParse(idPart, out int id) && id >= 0 && id < messages.Count)
+                    {
+                        messages.RemoveAt(id);
+                        if (httpParse.Body != null)
+                        {
+                            messages.Insert(id, httpParse.Body);
+                        }
+                        string body = "Message Edited!";
+
+                        string response = MakeResponse(body, 200, "application/json");
+                        await stream.WriteAsync(Encoding.UTF8.GetBytes(response));
+                    }
+                }
                 else
                 {
                     string response = MakeResponse("404 Not Found", 404);

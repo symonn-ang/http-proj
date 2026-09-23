@@ -45,16 +45,28 @@ do
             break;
         case 3:     // Delete a Message
             Console.Write("Enter an ID: ");
-            if(!int.TryParse(Console.ReadLine(), out int id))
+            if(int.TryParse(Console.ReadLine(), out int id))
+            {
+                await testFile.DeleteMessage(id);
+            }
+            else
             {
                 Console.WriteLine("Please enter a valid number.");
             }
-
-            await testFile.DeleteMessage(id);
-
             break;
         case 4:     // Edit a Message
-            
+            Console.Write("Enter the message ID to edit: ");
+            if (int.TryParse(Console.ReadLine(), out int msgID))
+            {
+                Console.Write("Enter a new message: ");
+                string newMessage = Console.ReadLine() ?? "";
+                await testFile.EditMessage(msgID, newMessage);
+            }
+            else
+            {
+                Console.WriteLine("Please Enter a valid number.");
+            }
+
             break;
         case 5:     // Exit
             Console.WriteLine("GoodBye!");
