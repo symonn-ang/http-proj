@@ -13,7 +13,8 @@ namespace http_server
     {
         string address = "127.0.0.1";
         int port = 5000;
-        static List<string> messages = new();
+        static List<Message> messages = new();
+        private static int id = 1;
         public async Task StartConnection()
         {
             var listener = new TcpListener(IPAddress.Parse(address), port);
@@ -78,11 +79,25 @@ namespace http_server
                 {
                     string idPart = httpParse.Path.Substring("/message/".Length);
 
-                    if (int.TryParse(idPart, out int id) && id >= 0 && id < messages.Count)
+                    if (int.TryParse(idPart, out int id)) // && id >= 0 && id < messages.Count opt out
                     {
-                        messages.RemoveAt(id);
-                        string body = JsonSerializer.Serialize(new { message = "Message Deleted." });
-                        string response = MakeResponse(body, 200, "application/json");
+                        var msgItem = messages.FirstOrDefault(x => x.Id == id);
+                        if (msgItem != null)
+                        {
+                            messages.Remove(msgItem);
+                            string body = JsonSerializer.Serialize(new { message = "Message Deleted." });
+                            string response = MakeResponse(body, 200, "application/json");
+                            await stream.WriteAsync(Encoding.UTF8.GetBytes(response));
+                        }
+                        else
+                        {
+                            string response = MakeResponse("Message Not Found", 404);
+                            await stream.WriteAsync(Encoding.UTF8.GetBytes(response));
+                        }
+                    }
+                    else
+                    {
+                        string response = MakeResponse("Invalid ID", 400);
                         await stream.WriteAsync(Encoding.UTF8.GetBytes(response));
                     }
 
@@ -91,29 +106,40 @@ namespace http_server
                 {
                     string idPart = httpParse.Path.Substring("/message/".Length);
 
-                    if (int.TryParse(idPart, out int id) && id >= 0 && id < messages.Count)
+                    if (int.TryParse(idPart, out int id)) //  && id >= 0 && id < messages.Count opt out
                     {
-                        messages.RemoveAt(id);
-                        if (httpParse.Body != null)
+                        var msgItem = messages.FirstOrDefault(x => x.Id == id);
+                        if (msgItem != null)
                         {
-                            messages.Insert(id, httpParse.Body);
+                            msgItem.Text = httpParse.Body ?? msgItem.Text;
+                            string body = "Message Edited!";
+                            string response = MakeResponse(body, 200, "application/json");
+                            await stream.WriteAsync(Encoding.UTF8.GetBytes(response));
                         }
-                        string body = "Message Edited!";
-
-                        string response = MakeResponse(body, 200, "application/json");
+                        else
+                        {
+                            string response = MakeResponse("404 Not Found", 404);
+                            await stream.WriteAsync(Encoding.UTF8.GetBytes(response));
+                        }
+                    }
+                    else
+                    {
+                        string response = MakeResponse("Invalid ID", 400);
                         await stream.WriteAsync(Encoding.UTF8.GetBytes(response));
                     }
                 }
                 else
                 {
+                    //SCode404();
                     string response = MakeResponse("404 Not Found", 404);
                     var resByte = Encoding.UTF8.GetBytes(response);
-
                     await stream.WriteAsync(resByte);
                 }
 
-                
 
+                // TODO async void SCode404() // async void is appr dangerous
+                //{
+                //}
 
             }
         }
@@ -162,6 +188,7 @@ namespace http_server
             string statusText = statusCode switch
             {
                 200 => "OK",
+                400 => "Bad Request",
                 404 => "Not Found",
                 405 => "Method Not Allowed",
                 _ => "Unknown"
@@ -170,7 +197,7 @@ namespace http_server
             string response =
                 $"HTTP/1.1 {statusCode} {statusText}\r\n" +
                 $"Content-Type: {contentType}\r\n" +
-                $"Content-Lenght: {Encoding.UTF8.GetByteCount(body)}\r\n" +
+                $"Content-Length: {Encoding.UTF8.GetByteCount(body)}\r\n" +
                 "\r\n" +
                 body;
 
@@ -220,19 +247,27 @@ namespace http_server
         {
             if (req.Body != null)
             {
-                messages.Add(req.Body);
+                Message message = new Message()
+                {
+                    Id = id++,
+                    Text = req.Body
+                };
+                messages.Add(message);
             }
             return "Message Created!";
         }
         string HandleGetMessages(HttpRequest req)
         {
-            var stringConcat = new StringBuilder();
-            foreach (string message in messages)
-            {
-                stringConcat.Append($"{message}");
-            }
-            return stringConcat.ToString();
+            //var stringConcat = new StringBuilder();
+            //foreach (var entry in messages)
+            //{
+            //    string message = JsonSerializer.Serialize(entry); 
+            //    stringConcat.Append(message);
+            //}
+            //return stringConcat.ToString();
+            return JsonSerializer.Serialize(messages);
         }
+
 
     }
 }

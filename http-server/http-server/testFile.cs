@@ -12,7 +12,6 @@ namespace http_server
     {
         private static string address = "127.0.0.1";
         private static int port = 5000;
-        private static int id = 0;
 
         public static async Task PostMessage(string message)
         {
@@ -20,13 +19,12 @@ namespace http_server
             await client.ConnectAsync(IPAddress.Parse(address), port);
             using NetworkStream stream = client.GetStream();
 
-            var data = new
-            {
-                id = id++,
-                message = message
-            };
+            //var data = new
+            //{
+            //    message = message
+            //};
 
-            string body = JsonSerializer.Serialize(data);
+            string body = message;
 
             string request =
                 "POST /message HTTP/1.1\r\n" +
@@ -99,13 +97,13 @@ namespace http_server
             await client.ConnectAsync(IPAddress.Parse(address), port);
             using NetworkStream stream = client.GetStream();
 
-            var data = new
-            {
-                id = id,
-                message = message
-            };
+            //var data = new
+            //{
+            //    id = id,
+            //    message = message
+            //};
 
-            string body = JsonSerializer.Serialize(data);
+            string body = message;
 
             string request =
                 $"PUT /message/{id} HTTP/1.1\r\n" +
