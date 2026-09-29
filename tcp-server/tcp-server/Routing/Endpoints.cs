@@ -18,9 +18,7 @@ namespace tcp_server.Routing
             string request = MakeString.MakeRequest("GET", "/messages");
             await stream.WriteAsync(Encoding.UTF8.GetBytes(request));
 
-            byte[] buffer = new byte[4096];
-            int received = await stream.ReadAsync(buffer);
-            string response = Encoding.UTF8.GetString(buffer, 0, received);
+            string response = await NetStream.Read(stream);
 
             Console.WriteLine($"\nReceived:\n{response}\n");
         }
@@ -34,9 +32,7 @@ namespace tcp_server.Routing
             string request = MakeString.MakeRequest("POST", "/message", message);
             await stream.WriteAsync(Encoding.UTF8.GetBytes(request));
 
-            byte[] buffer = new byte[4096];
-            int received = await stream.ReadAsync(buffer);
-            string response = Encoding.UTF8.GetString(buffer, 0, received);
+            string response = await NetStream.Read(stream);
 
             Console.WriteLine($"\nReceived:\n{response}\n");
         }
@@ -50,9 +46,7 @@ namespace tcp_server.Routing
             string request = MakeString.MakeRequest("PUT", $"/message/{id}", message);
             await stream.WriteAsync(Encoding.UTF8.GetBytes(request));
 
-            byte[] buffer = new byte[4096];
-            int received = await stream.ReadAsync(buffer);
-            string response = Encoding.UTF8.GetString(buffer, 0, received);
+            string response = await NetStream.Read(stream);
 
             Console.WriteLine($"\nReceived:\n{response}\n");
         }
@@ -66,9 +60,7 @@ namespace tcp_server.Routing
             string request = MakeString.MakeRequest("DELETE", $"/message/{id}");
             await stream.WriteAsync(Encoding.UTF8.GetBytes(request));
 
-            byte[] buffer = new byte[4096];
-            int received = await stream.ReadAsync(buffer);
-            string response = Encoding.UTF8.GetString(buffer, 0, received);
+            string response = await NetStream.Read(stream);
 
             Console.WriteLine($"\nReceived:\n{response}\n");
         }
