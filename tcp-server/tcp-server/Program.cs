@@ -26,6 +26,7 @@ do
     if (!int.TryParse(Console.ReadLine(), out option))
     {
         Console.WriteLine("Please enter a valid number.");
+        continue;
     }
 
     switch (option)

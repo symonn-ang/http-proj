@@ -29,7 +29,7 @@ namespace tcp_server
             }
             finally
             {
-
+                listener.Stop();
             }
         }
     }

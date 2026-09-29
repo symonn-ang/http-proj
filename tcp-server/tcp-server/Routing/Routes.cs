@@ -13,6 +13,7 @@ namespace tcp_server.Routing
         {
             if (Data.messages != null)
             {
+                //throw new Exception("Test exception");
                 return JsonSerializer.Serialize(Data.messages);
             }
 
