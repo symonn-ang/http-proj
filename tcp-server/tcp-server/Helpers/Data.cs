@@ -11,5 +11,6 @@ namespace tcp_server.Helpers
         public static int port = 5000;
         public static List<Message> messages = new List<Message>();
         public static int id = 1;
+        
     }
 }

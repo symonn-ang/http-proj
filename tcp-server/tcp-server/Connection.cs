@@ -11,12 +11,12 @@ namespace tcp_server
     {
         public async Task StartConnection()
         {
-            var listener = new TcpListener(IPAddress.Parse(Data.address), Data.port);
+            var listener = new TcpListener(IPAddress.Parse(Helpers.Data.address), Helpers.Data.port);
 
             try
             {
                 listener.Start();
-                Console.WriteLine($"Listening in... {Data.address}:{Data.port}");
+                Console.WriteLine($"Listening in... {Helpers.Data.address}:{Helpers.Data.port}");
                 while (true)
                 {
                     var client = await listener.AcceptTcpClientAsync();
