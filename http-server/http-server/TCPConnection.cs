@@ -52,8 +52,6 @@ namespace http_server
                     ["GET /messages"] = HandleGetMessages,
                     ["POST /echo"] = HandleEcho,
                     ["POST /message"] = HandlePostMessage,
-                    //[$"DELETE /message/{id}"] = HandleDeleteMessage,
-                    //["PUT /message/{id}"] = HandleEditMessage,
                 };
 
                 byte[] buffer = new byte[4096];
@@ -137,7 +135,7 @@ namespace http_server
                 }
 
 
-                // TODO async void SCode404() // async void is appr dangerous
+                // TODO async void SCode404() // async void is dangerous
                 //{
                 //}
 
@@ -191,6 +189,7 @@ namespace http_server
                 400 => "Bad Request",
                 404 => "Not Found",
                 405 => "Method Not Allowed",
+                500 => "Internal Server Error",
                 _ => "Unknown"
             };
 
