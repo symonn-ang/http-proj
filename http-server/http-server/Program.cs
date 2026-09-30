@@ -341,7 +341,7 @@ await check;
 //        {
 //            string body = $"Welcome to Root Path!";
 
-//            string response =                                                   // TODO string's repeating, make a func
+//            string response =                                                   
 //                "HTTP/1.1 200 OK\r\n" +
 //                "Content-Type: text/plain\r\n" +
 //                $"Content-Length: {Encoding.UTF8.GetByteCount(body)}\r\n" +
